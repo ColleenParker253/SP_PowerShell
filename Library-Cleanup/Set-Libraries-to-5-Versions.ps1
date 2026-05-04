@@ -17,7 +17,7 @@ if (-not (Get-Module -ListAvailable -Name $legacyModule)) {
 Import-Module SharePointPnPPowerShellOnline
 
 # Define your SharePoint site URL
-$siteUrl = "https://questnutrition.sharepoint.com/sites/fpaa"
+$siteUrl = "<set this to your site address>"
 
 # Connect using legacy web login (supports MFA)
 Connect-PnPOnline -Url $siteUrl -UseWebLogin  -WarningAction Ignore'
