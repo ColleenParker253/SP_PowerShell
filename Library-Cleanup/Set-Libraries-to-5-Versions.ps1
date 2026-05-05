@@ -20,7 +20,7 @@ Import-Module SharePointPnPPowerShellOnline
 $siteUrl = "<set this to your site address>"
 
 # Connect using legacy web login (supports MFA)
-Connect-PnPOnline -Url $siteUrl -UseWebLogin  -WarningAction Ignore'
+Connect-PnPOnline -Url $siteUrl -UseWebLogin  -WarningAction Ignore
 
 # Get all lists in the site
 $lists = Get-PnPList
