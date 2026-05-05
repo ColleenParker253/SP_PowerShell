@@ -1,6 +1,8 @@
 # === CONFIGURATION SET YOUR OWN ADDRESS FOR THE FILE ===
 $dryRun = $false  # Set to $false to actually delete versions
-$logPath = "C:\temp\Logs\<change this name>.csv"
+$logPath = "C:\temp\Logs\FPAA-Version-Cleanup.csv"
+$siteaddress = "https://questnutrition.sharepoint.com/sites/<sitename>"
+$libraryname = "Shared Documents"
 
 # Initialize log file
 if (!(Test-Path $logPath)) {
@@ -8,10 +10,10 @@ if (!(Test-Path $logPath)) {
 }
 
 # Connect using web login
-Connect-PnPOnline -Url "https://<change this to your site address" -UseWebLogin
+Connect-PnPOnline -Url $siteaddress -UseWebLogin
 
 # Get all items in the Shared Documents library
-$items = Get-PnPListItem -List "<change this to your library name>" -PageSize 100
+$items = Get-PnPListItem -List $libraryname -PageSize 100
 
 foreach ($item in $items) {
     try {
@@ -24,7 +26,7 @@ foreach ($item in $items) {
 
                 if ($versions -ne $null -and $versions.Count -gt 10) {
                     $versionCount = $versions.Count
-                    $versionsToDelete = $versionCount - 10
+                    $versionsToDelete = $versionCount - 5
 
                     Write-Host "`nFile: $($file.Name) has $versionCount versions. Preparing to delete $versionsToDelete oldest versions..."
 
