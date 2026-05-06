@@ -1,7 +1,7 @@
 # === CONFIGURATION SET YOUR OWN ADDRESS FOR THE FILE ===
 $dryRun = $false  # Set to $false to actually delete versions
-$logPath = "C:\temp\Logs\FPAA-Version-Cleanup.csv"
-$siteaddress = "https://questnutrition.sharepoint.com/sites/<sitename>"
+$logPath = "C:\temp\Logs\<NAME OF SITE>.csv"
+$siteaddress = "https://<TENANT>/sites/<site>"
 $libraryname = "Shared Documents"
 
 # Initialize log file
