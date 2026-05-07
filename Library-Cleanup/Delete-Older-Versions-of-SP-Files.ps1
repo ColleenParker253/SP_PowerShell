@@ -1,8 +1,8 @@
 # === CONFIGURATION SET YOUR OWN ADDRESS FOR THE FILE ===
 $dryRun = $true  # Set to $false to actually delete versions
-$logPath = "C:\temp\Logs\<NAME OF SITE>.csv"
-$siteaddress = "https://<TENANT>/sites/<site>"
-$libraryname = "Shared Documents"
+$logPath = "C:\temp\Logs\<NAME OF SITE VERSION DELETION>.csv" # Update to match where you want the log saved
+$siteaddress = "https://<TENANT>/sites/<site>" # Update to the site name
+$libraryname = "Shared Documents" # Update to the library name if it isn't Shared Documents
 
 # Initialize log file
 if (!(Test-Path $logPath)) {
