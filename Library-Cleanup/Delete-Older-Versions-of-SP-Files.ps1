@@ -1,5 +1,5 @@
 # === CONFIGURATION SET YOUR OWN ADDRESS FOR THE FILE ===
-$dryRun = $false  # Set to $false to actually delete versions
+$dryRun = $true  # Set to $false to actually delete versions
 $logPath = "C:\temp\Logs\<NAME OF SITE>.csv"
 $siteaddress = "https://<TENANT>/sites/<site>"
 $libraryname = "Shared Documents"
@@ -26,7 +26,7 @@ foreach ($item in $items) {
 
                 if ($versions -ne $null -and $versions.Count -gt 10) {
                     $versionCount = $versions.Count
-                    $versionsToDelete = $versionCount - 5
+                    $versionsToDelete = $versionCount - 10
 
                     Write-Host "`nFile: $($file.Name) has $versionCount versions. Preparing to delete $versionsToDelete oldest versions..."
 
