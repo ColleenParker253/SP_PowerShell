@@ -1,60 +1,108 @@
-Connect-SPOService -Url https://<tenantname>-admin.sharepoint.com
+<#
+.SYNOPSIS
+Retrieves all SharePoint Online Communication Site Owners groups using PnP PowerShell.
 
-# Create an empty array to store the output
-$output = @()
+.DESCRIPTION
+Connects to SharePoint Online using Connect-PnPOnline, enumerates all Communication Sites,
+retrieves each site's Owners group, prints results to the console, and exports a CSV file.
 
-# Get all site collections
-$x = Get-SPOSite -Template "SITEPAGEPUBLISHING#0"  # Filter by Communication Site Template
+.PARAMETER TenantName
+The tenant name portion of your SharePoint Online domain.
+Example: "contoso" → https://contoso.sharepoint.com
 
-# Loop through each site collection
-foreach ($y in $x)
-{
-    # Write the site collection URL to the console in yellow
-    Write-Host $y.Url -ForegroundColor "Yellow"
+.PARAMETER AdminUrl
+Optional. If you prefer to specify the full admin URL manually.
+If not provided, the script builds it using TenantName.
 
-    # Try to get the site groups for the site collection
-    try
-    {
-        $z = Get-SPOSiteGroup -Site $y.Url
-    }
-    # Catch any errors and display the message in red
-    catch
-    {
-        Write-Host $_.Exception.Message -ForegroundColor "Red"
-        # Continue to the next iteration of the loop
-        continue
-    }
+.PARAMETER OutputPath
+Full path to the CSV file to be created.
 
-    # Loop through each site group
-    foreach ($a in $z)
-    {
-        # Get the Owners group details for the site collection and group name
-        try
-        {
-            $b = Get-SPOSiteGroup -Site $y.Url $a.Title -Filter \
-'Title - like "*Owner*"'
+.EXAMPLE
+.\Get-AllCommunicationSiteOwners-PnP.ps1 -TenantName "contoso"
+
+.EXAMPLE
+.\Get-AllCommunicationSiteOwners-PnP.ps1 -TenantName "contoso" -OutputPath "C:\Reports\CommSiteOwners.csv"
+#>
+
+param(
+    [Parameter(Mandatory = $true)]
+    [string]$TenantName,
+
+    [string]$AdminUrl,
+
+    [Parameter(Mandatory = $false)]
+    [string]$OutputPath = ".\CommSiteOwners.csv"
+)
+
+# Build admin URL if not provided
+if (-not $AdminUrl) {
+    $AdminUrl = "https://$TenantName-admin.sharepoint.com"
+}
+
+# Validate PnP.PowerShell module
+if (-not (Get-Module -ListAvailable -Name PnP.PowerShell)) {
+    Write-Host "PnP.PowerShell module not found. Install using: Install-Module PnP.PowerShell" -ForegroundColor Red
+    return
+}
+
+Write-Host "Connecting to SharePoint Online Admin Center: $AdminUrl" -ForegroundColor Cyan
+Connect-PnPOnline -Url $AdminUrl -Interactive
+
+# Get all Communication Sites
+Write-Host "Retrieving Communication Sites..." -ForegroundColor Cyan
+$sites = Get-PnPTenantSite -Template "SITEPAGEPUBLISHING#0"
+
+# Prepare output collection
+$results = @()
+
+foreach ($site in $sites) {
+
+    Write-Host "`nProcessing site: $($site.Url)" -ForegroundColor Yellow
+
+    # Connect to each site individually
+    Connect-PnPOnline -Url $site.Url -Interactive
+
+    # Get all groups for the site
+    $groups = Get-PnPGroup
+
+    # Find the Owners group (supports renamed groups containing "Owner")
+    $ownersGroup = $groups | Where-Object { $_.Title -like "*Owner*" }
+
+    if ($ownersGroup) {
+        Write-Host "Owners Group: $($ownersGroup.Title)" -ForegroundColor Cyan
+
+        # Get users in the Owners group
+        $owners = Get-PnPGroupMembers -Identity $ownersGroup.Title
+
+        if ($owners) {
+            $ownerEmails = $owners.Email -join "; "
+            Write-Host "Owners: $ownerEmails"
         }
-        # Catch any errors and display the message in red
-        catch
-        {
-            Write-Host $_.Exception.Message -ForegroundColor "Red"
-            # Continue to the next iteration of the loop
-            continue
+        else {
+            $ownerEmails = ""
+            Write-Host "No owners found." -ForegroundColor Red
         }
 
-        # Write the site group name to the console in cyan
-        Write-Host $b.Title -ForegroundColor "Cyan"
+        # Build output object
+        $results += [PSCustomObject]@{
+            SiteName = $site.Title
+            SiteUrl  = $site.Url
+            Owners   = $ownerEmails
+        }
+    }
+    else {
+        Write-Host "No Owners group found for this site." -ForegroundColor Red
 
-        # Get the users in the site group and write them to the console
-        $b | Select-Object -ExpandProperty Users | Write-Host
-
-        # Add the site collection URL, site group name, and users to the output array
-        $output += $y.Url, $b.Title, ($b | Select-Object -ExpandProperty Users)
-
-        # Write an empty line to the console
-        Write-Host
+        $results += [PSCustomObject]@{
+            SiteName = $site.Title
+            SiteUrl  = $site.Url
+            Owners   = ""
+        }
     }
 }
 
-# Write the output array to a CSV file, using a relative path and appending to the file
-$output | Out-File c:\Users\<username>\CommSiteOwners.csv -Append
+# Export results
+Write-Host "`nExporting results to $OutputPath..." -ForegroundColor Cyan
+$results | Export-Csv -Path $OutputPath -NoTypeInformation -Encoding UTF8
+
+Write-Host "`nCompleted." -ForegroundColor Green
